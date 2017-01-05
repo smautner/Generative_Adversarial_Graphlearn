@@ -1,5 +1,4 @@
 # SETUP ...
-from IPython.core.display import HTML
 from toolz import curry, compose, map, concat, pipe, first, second, take
 
 from eden_chem.io.pubchem import download
@@ -52,34 +51,34 @@ from graphlearn.trial_samplers import GAT
 def train_and_test(data, train_size, trainclass=1, niter=20):
     # select data ->  train -> test
     X, y, graphs = data
-    z = np.where(y == trainclass)[0]
-    test_ids = np.random.permutation(z)[:train_size]
-    usegraphs = list(selection_iterator(graphs, test_ids.tolist()))
+    possible_train_ids = np.where(y == trainclass)[0]
+    train_ids = np.random.permutation(possible_train_ids)[:train_size]
+    train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
 
+    # rename things
     # create test data..
-    every = set(range(X.shape[0]))
-    want = np.array(list(every - set(test_ids)))
-    X_test = X[want]
-    Y_test = y[want]
+    all_ids = set(range(X.shape[0]))
+    test_ids = np.array(list(all_ids - set(train_ids)))
+    X_test = X[test_ids]
+    Y_test = y[test_ids]
 
     # train ...
-    estis, congraph, seedzz = GAT.sample(GAT.get_sampler(),
+    estimators, constructed_graphs = GAT.generative_adersarial_training(
+                                         GAT.get_sampler(),
                                          n_iterations=niter,
-                                         seedgraphs=usegraphs)
+                                         seedgraphs=train_graphs)
     # test
-    return map( lambda x:[Y_test]+test(x,X_test)  ,estis[1:] )
+    return map( lambda x:[Y_test]+test(x,X_test),estimators[1:] )
 
 
-def prepdata(data):
+def transpose_and_hstack(data):
     # eg [111] is actually a <t,s,p> <t,s,p> etc   => transform these to this:
     # stack (t1,t2,t3..) , stack (s1,s2,s3...) , stack(p1,p2 .. )
     # (t s p) is the  true y, the score of y and the predicted class ...
     # the actual order is btw <t p s >
+    transposed_data = map(list, zip(*data))
+    return [np.hstack(tuple(thing)) for thing in transposed_data]
 
-    for bunch in data:
-        sortedbunch = map(list, zip(*bunch))
-        res = [np.hstack(tuple(thing)) for thing in sortedbunch]
-        yield res
 
 
 def collect_data(assay_id=None, repeats=3, train_size=100, niter=20):
@@ -87,9 +86,8 @@ def collect_data(assay_id=None, repeats=3, train_size=100, niter=20):
     # transpose [123][123][123] => [111][222][333]
     # ( where the numbers indicate the level of adversaries :)
     result = map(list, zip(*result))
+    return map(transpose_and_hstack, result)
 
-    # see prepdata obviously :)
-    return prepdata(result)
 
 
 # DISPLAY THE THINGS
