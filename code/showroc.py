@@ -1,103 +1,111 @@
-# SETUP ...
-from toolz import curry, compose, map, concat, pipe, first, second, take
-
+from toolz import curry, compose, concat, pipe, first, second, take
 from eden_chem.io.pubchem import download
-
-download_active = curry(download)(active=True)
-download_inactive = curry(download)(active=False)
-
-# make a vectrorizer
-num_mols = 4000
-import multiprocessing as mp
-
-num_cpus = mp.cpu_count()
-block_size = num_mols / num_cpus
-
 from eden.graph import Vectorizer
-
-
-def vectorize(thing, **kwargs):
-    v = Vectorizer(**kwargs)
-    return v.transform(thing)
-
-
-cvectorize = curry(vectorize)(complexity=3, nbits=20, n_jobs=num_cpus, block_size=block_size)
-
 import numpy as np
 from scipy.sparse import vstack
 from GArDen.convert.molecule import sdf_to_nx as babel_load  # !!!
-
-
-def make_data(assay_id):
-    active_X = pipe(assay_id, download_active, babel_load, cvectorize)
-    inactive_X = pipe(assay_id, download_inactive, babel_load, cvectorize)
-    X = vstack((active_X, inactive_X))
-    y = np.array([1] * active_X.shape[0] + [-1] * inactive_X.shape[0])
-    graphs = list(pipe(assay_id, download_active, babel_load)) + list(pipe(assay_id, download_inactive, babel_load))
-    return X, y, graphs
-
-
-def test(estimator, X):
-    y_pred = estimator.predict(X)
-    # y_score = estimator.decision_function(X)
-    y_score = estimator.predict_proba(X)[:, 0]
-    return [y_pred, y_score]
-
-
+from GArDen.convert.molecule import nx_to_image
 from eden.util import selection_iterator
 from graphlearn.trial_samplers import GAT
-
-
-def train_and_test(data, train_size, trainclass=1, niter=20):
-    # select data ->  train -> test
-    X, y, graphs = data
-    possible_train_ids = np.where(y == trainclass)[0]
-    train_ids = np.random.permutation(possible_train_ids)[:train_size]
-    train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
-
-    # rename things
-    # create test data..
-    all_ids = set(range(X.shape[0]))
-    test_ids = np.array(list(all_ids - set(train_ids)))
-    X_test = X[test_ids]
-    Y_test = y[test_ids]
-
-    # train ...
-    estimators, constructed_graphs = GAT.generative_adersarial_training(
-                                         GAT.get_sampler(),
-                                         n_iterations=niter,
-                                         seedgraphs=train_graphs)
-    # test
-    return map( lambda x:[Y_test]+test(x,X_test),estimators[1:] )
-
-
-def transpose_and_hstack(data):
-    # eg [111] is actually a <t,s,p> <t,s,p> etc   => transform these to this:
-    # stack (t1,t2,t3..) , stack (s1,s2,s3...) , stack(p1,p2 .. )
-    # (t s p) is the  true y, the score of y and the predicted class ...
-    # the actual order is btw <t p s >
-    transposed_data = map(list, zip(*data))
-    return [np.hstack(tuple(thing)) for thing in transposed_data]
-
-
-
-def collect_data(assay_id=None, repeats=3, train_size=100, niter=20):
-    result = [train_and_test(make_data(assay_id),train_size,niter=niter) for i in range(repeats)]
-    # transpose [123][123][123] => [111][222][333]
-    # ( where the numbers indicate the level of adversaries :)
-    result = map(list, zip(*result))
-    return map(transpose_and_hstack, result)
-
-
-
-# DISPLAY THE THINGS
+# DISPLAY IMPORTS
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import classification_report
 from eden_display import plot_confusion_matrices
 from eden_display import plot_aucs
+from sklearn.linear_model import SGDClassifier
 
+import matplotlib.pyplot as plt
+download_active = curry(download)(active=True)
+download_inactive = curry(download)(active=False)
+
+
+def vectorize(thing):
+    v = Vectorizer()
+    return v.transform(thing)
+
+def transpose(things):
+    return map(list,zip(*things))
+
+def test(estimator, X):
+    y_pred = estimator.predict(X)
+    y_score = estimator.predict_proba(X)[:, 0]
+    return [y_pred, y_score]
+
+
+
+
+'''
+There is going to be a main that is
+
+1. make data [(test),test_trained_esti,train_graphs] for each repeat
+
+2. conducting training   train_graphs -> newestisestis, newgraphs
+
+3. evaluate things roc, graph_quality, select graphs
+4. draw   roc, quality of graphs, some newgraphs
+'''
+
+def get_data(assay_id):
+    active_X = pipe(assay_id, download_active, babel_load, vectorize)
+    inactive_X = pipe(assay_id, download_inactive, babel_load, vectorize)
+    X = vstack((active_X, inactive_X))
+    y = np.array([1] * active_X.shape[0] + [-1] * inactive_X.shape[0])
+    graphs = list(pipe(assay_id, download_active, babel_load)) + list(pipe(assay_id, download_inactive, babel_load))
+    return X, y, graphs
+
+
+def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1, test_size_per_class=100):
+    #   [(test), test_trained_esti, train_graphs] for each repeat
+
+    X,y,graphs= get_data(assay_id)
+
+    def get_run():
+        # get train items
+        possible_train_ids = np.where(y == trainclass)[0]
+        train_ids = np.random.permutation(possible_train_ids)[:train_size]
+        train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
+
+        # get test items
+        possible_test_ids_1 = np.array(list( set(possible_train_ids) - set(train_ids)))
+        possible_test_ids_0 = np.where(y == not_train_class)[0]
+        test_ids_1 = np.random.permutation(possible_test_ids_1)[:test_size_per_class]
+        test_ids_0 = np.random.permutation(possible_test_ids_0)[:test_size_per_class]
+        test_ids= np.hstack((test_ids_1,test_ids_0))
+        X_test = X[test_ids]
+        Y_test = y[test_ids]
+
+        esti= SGDClassifier(loss='log')
+        esti.fit(X_test,Y_test)
+        return {'X_test':X_test,'y_test':Y_test,'oracle':esti,'graphs_train':train_graphs}
+
+    return [get_run() for i in range(repeats)]
+
+
+############################################################################
+
+def generative_training(data,niter):
+    # data -> [estis]*niter, [gengraphs]*niter
+    train= lambda x: GAT.generative_adersarial_training(
+        GAT.get_sampler(), n_iterations=niter, seedgraphs=x, partial_estimator=False)
+    stuff = [ train(x['graphs_train']) for x in data ]
+    return transpose(stuff)
+
+#########################################################################
+
+
+def roc_data(estis,data):
+    # test each generated estimator with the according estimator
+    dat = [ map(lambda x: [dat['y_test']]+test(x,dat['X_test']) ,esti ) for esti,dat in zip(estis,data)]
+    # transposing orders the result by level or depth or whatever.
+    # the map above is generating a 2d matrix -> we have $repeats many
+    # we can just hstack the 2d arrays..
+    return [np.hstack(tuple(allrepeats)) for allrepeats in transpose(dat)]
+
+def drawroc_data(rocdata):
+    for e in rocdata:
+        predicitve_performance_report(e)
 
 def predicitve_performance_report(data, filename=None):
     y_true, y_pred, y_score = data
@@ -113,10 +121,99 @@ def predicitve_performance_report(data, filename=None):
     print classification_report(y_true, y_pred)
     print '_' * line_size
     print
-    plot_confusion_matrices(y_true, y_pred, size=int(len(set(y_true)) * 2.5), filename='confus_%d_.png' % filename)
+    if filename:
+        conf_filename = 'confus_%d_.png' % filename
+        auc_filename = 'auc_%d_.png' % filename
+    else:
+        conf_filename, auc_filename = None, None
+    plot_confusion_matrices(y_true, y_pred, size=int(len(set(y_true)) * 2.5), filename=conf_filename)
     print '_' * line_size
     print
-    plot_aucs(y_true, y_score, size=10, filename='auc_%d_.png' % filename)
+    plot_aucs(y_true, y_score, size=10, filename=auc_filename)
+##
+
+def select_graphs(graphs,estis, print_best=5 ):
+    if print_best > 0:
+        # calculate the scores of the graphs  with the right estimators... GATdepth*repeats
+        scores = [[e.predict(vectorize(g)) for g,e in zip(gs,es)]  for gs,es in zip(graphs,estis)]
+        # take the graphs with the best scores ..
+        graphs = [[ list(selection_iterator(gr,np.argpartition(sco,-print_best)[-print_best:]))
+                    for gr,sco in zip(grs,scores)]   for grs,scores in zip(graphs,scores)]
+        # collapse graphs that are on the same GAT-level
+        return map(lambda x: reduce(lambda y,z: z+y,x),transpose(graphs))
+
+
+
+
+from graphlearn.utils import molecule
+def draw_select_graphs(graphs):
+    for i, graphlist in enumerate(graphs):
+        print 'best graphs (according to GAT) for repeat #%d' % i
+        molecule.draw(graphlist)
+        #pic = nx_to_image(graphlist)
+        #plt.figure()
+        #plt.imshow(np.asarray(pic))
+
+
+##
+def graphlol(data, newgraphs):
+    estis= [d['oracle'] for d in data]
+    scores = [[es.predict_proba(vectorize(level))[:,0] for level in repeats] for repeats, es in zip(newgraphs, estis)]
+    # order by level and concatenate over all repeats
+    scores = map(lambda z: reduce(lambda x,y: np.concatenate((x,y)),z) , transpose(scores))
+    # get means snd stds
+    return transpose([ [np.mean(e),np.std(e)] for e in scores])
+
+
+
+
+def draw_graph_quality(data):
+    means,stds= data
+    plt.figure(figsize=(14, 5))
+    fig, ax = plt.subplots()
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontname('Arial')
+        label.set_fontsize(14)
+    #plt.ylim(0, 80)
+    #plt.xlim(0, 400)
+    plt.axhline(y=38, color='black', linewidth=3)
+
+    def fillthing(y, std, label='some label', col='b'):
+        y = np.array(y)
+        std = np.array(std)
+        ax.fill_between('asd', y + std, y - std, facecolor=col, alpha=0.3, linewidth=0)
+        # ax.plot(labels,y,label=label,color='gray')
+        ax.plot('asd', y, color='gray')
+
+    fillthing(means, stds, col='#6A9AE2')
+
+    ax.plot('asdasd', means, label='new CIP', color='b', linewidth=2.0)
+    # add some text for labels, title and axes ticks
+    labelfs = 16
+    ax.set_ylabel('something', fontsize=labelfs)
+    ax.set_xlabel('something2', fontsize=labelfs)
+    ax.legend(loc='lower right')
+    plt.show()
+
+def simple_draw_graph_quality(data):
+    means,std = data
+    plt.figure()
+    plt.errorbar(range(len(means)), means,  yerr=std)
+    plt.title("something")
+    plt.show()
+
+##
+def evaluate_all(data,estis,newgraphs,draw_best=5):
+    rocdata = roc_data(estis,data)            # what does this need to look like?
+    graphs =  select_graphs(newgraphs, estis, print_best=draw_best )      # select some graphs that need drawing later
+    graph_quality = graphlol(data,newgraphs) # dunno, lol
+    return rocdata,graphs,graph_quality
+
+
+
+
+######################################################################
+
 
 
 # make a data source
@@ -132,5 +229,14 @@ assay_id = '1224857'  # apr10
 assay_id = '2326'  # apr03 200k mols
 assay_id = '1834'  # apr90 500 mols
 
-for i, item in enumerate(collect_data(assay_id=assay_id, repeats=2, train_size=50, niter=2)):
-    predicitve_performance_report(item, i)
+
+
+
+if __name__ == '__main__':
+    data=make_data(assay_id,repeats=2,trainclass=1,train_size=20)
+    stuff = generative_training(data,niter=2)
+    estis,newgraphs = stuff
+    roc, graphs, quality = evaluate_all(data,estis,newgraphs,draw_best=5)
+    simple_draw_graph_quality(quality)
+    draw_select_graphs(graphs)
+    drawroc_data(roc)
