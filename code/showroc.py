@@ -3,8 +3,8 @@ from eden_chem.io.pubchem import download
 from eden.graph import Vectorizer
 import numpy as np
 from scipy.sparse import vstack
-from GArDen.convert.molecule import sdf_to_nx as babel_load  # !!!
-from GArDen.convert.molecule import nx_to_image
+from eden_chem.rdkitutils import sdf_to_nx as babel_load  # !!!
+from eden_chem.rdkitutils import nx_to_image
 from eden.util import selection_iterator
 from graphlearn.trial_samplers import GAT
 # DISPLAY IMPORTS
