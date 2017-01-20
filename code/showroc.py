@@ -3,8 +3,8 @@ from eden_chem.io.pubchem import download
 from eden.graph import Vectorizer
 import numpy as np
 from scipy.sparse import vstack
-from eden_chem.rdkitutils import sdf_to_nx as babel_load  # !!!
-from eden_chem.rdkitutils import nx_to_image
+from eden_chem.io.rdkitutils import sdf_to_nx as babel_load  # !!!
+from eden_chem.display.rdkitutils import nx_to_image
 from eden.util import selection_iterator
 from graphlearn.trial_samplers import GAT
 # DISPLAY IMPORTS
@@ -15,6 +15,7 @@ from sklearn.metrics import classification_report
 from eden_display import plot_confusion_matrices
 from eden_display import plot_aucs
 from sklearn.linear_model import SGDClassifier
+import eden_tricks
 
 import matplotlib.pyplot as plt
 download_active = curry(download)(active=True)
@@ -50,16 +51,25 @@ There is going to be a main that is
 def get_data(assay_id):
     active_X = pipe(assay_id, download_active, babel_load, vectorize)
     inactive_X = pipe(assay_id, download_inactive, babel_load, vectorize)
+
     X = vstack((active_X, inactive_X))
     y = np.array([1] * active_X.shape[0] + [-1] * inactive_X.shape[0])
     graphs = list(pipe(assay_id, download_active, babel_load)) + list(pipe(assay_id, download_inactive, babel_load))
-    return X, y, graphs
+    stats={'active':active_X.shape[0], 'inactive':inactive_X.shape[0]}
+
+    return X, y, graphs, stats
 
 
 def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1, test_size_per_class=100):
     #   [(test), test_trained_esti, train_graphs] for each repeat
 
-    X,y,graphs= get_data(assay_id)
+    X,y,graphs,stats= get_data(assay_id)
+    print 'indicator of tak-ease:'
+    print eden_tricks.task_difficulty(X,y)
+    print stats
+
+    esti = SGDClassifier(average=True, class_weight='balanced', shuffle=True, n_jobs=4, loss='log')
+    esti.fit(X,y)
 
     def get_run():
         # get train items
@@ -76,8 +86,8 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
         X_test = X[test_ids]
         Y_test = y[test_ids]
 
-        esti= SGDClassifier(loss='log')
-        esti.fit(X_test,Y_test)
+        #esti= SGDClassifier(loss='log')
+        #esti.fit(X_test,Y_test)
         return {'X_test':X_test,'y_test':Y_test,'oracle':esti,'graphs_train':train_graphs}
 
     return [get_run() for i in range(repeats)]
@@ -154,6 +164,13 @@ def draw_select_graphs(graphs):
         #plt.figure()
         #plt.imshow(np.asarray(pic))
 
+##
+def internalgat(estis, newgraphs):
+    scores = [[level_esti.predict_proba(vectorize(level))[:,0] for level,level_esti in zip(repeats,repeats_es[1:])] for repeats, repeats_es in zip(newgraphs, estis)]
+    # scores are now [l1,l2,l3..][l1,l2,l3..][l1,l2,l3..]
+    scores = map(lambda z: reduce(lambda x,y: np.concatenate((x,y)),z) , transpose(scores))
+    # transpose to get: [l1,l1,l1..][l2,l2,l2..]  .. and we just flatten the [l_x,l_x..]
+    return transpose([ [np.mean(e),np.std(e)] for e in scores])
 
 ##
 def graphlol(data, newgraphs):
@@ -195,19 +212,25 @@ def draw_graph_quality(data):
     ax.legend(loc='lower right')
     plt.show()
 
-def simple_draw_graph_quality(data):
+def simple_draw_graph_quality(data,title='title',file=None):
     means,std = data
     plt.figure()
     plt.errorbar(range(len(means)), means,  yerr=std)
-    plt.title("something")
-    plt.show()
+    plt.title(title)
+    if file is not None:
+        plt.savefig(file)
+    else:
+        plt.show()
 
 ##
+
+
 def evaluate_all(data,estis,newgraphs,draw_best=5):
     rocdata = roc_data(estis,data)            # what does this need to look like?
     graphs =  select_graphs(newgraphs, estis, print_best=draw_best )      # select some graphs that need drawing later
     graph_quality = graphlol(data,newgraphs) # dunno, lol
-    return rocdata,graphs,graph_quality
+    graph_quality_internal = internalgat(estis,newgraphs)
+    return rocdata,graphs,graph_quality, graph_quality_internal
 
 
 
