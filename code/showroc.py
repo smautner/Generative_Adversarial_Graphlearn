@@ -1,4 +1,6 @@
 from toolz import curry, compose, concat, pipe, first, second, take
+import matplotlib
+matplotlib.use('Agg')
 from eden_chem.io.pubchem import download
 from eden.graph import Vectorizer
 import numpy as np
@@ -18,8 +20,6 @@ from sklearn.linear_model import SGDClassifier
 import eden_tricks
 
 
-import matplotlib
-matplotlib.use('Agg')
 
 
 import matplotlib.pyplot as plt
