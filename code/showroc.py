@@ -17,6 +17,11 @@ from eden_display import plot_aucs
 from sklearn.linear_model import SGDClassifier
 import eden_tricks
 
+
+import matplotlib
+matplotlib.use('Agg')
+
+
 import matplotlib.pyplot as plt
 download_active = curry(download)(active=True)
 download_inactive = curry(download)(active=False)
