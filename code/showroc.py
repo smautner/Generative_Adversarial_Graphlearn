@@ -259,7 +259,8 @@ if __name__ == '__main__':
     data=make_data(assay_id,repeats=2,trainclass=1,train_size=20)
     stuff = generative_training(data,niter=2)
     estis,newgraphs = stuff
-    roc, graphs, quality = evaluate_all(data,estis,newgraphs,draw_best=5)
-    simple_draw_graph_quality(quality)
-    draw_select_graphs(graphs)
-    drawroc_data(roc)
+    detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat= evaluate_all(data, estis, newgraphs, draw_best=5)
+    simple_draw_graph_quality(quick_roc_gat, title='estimator quality',file='1')
+    simple_draw_graph_quality(quick_roc_internal_gat, title='new graph quality',file='2')
+    #draw_select_graphs(best_graphs)
+    #drawroc_data(detailed_roc_oracle)
