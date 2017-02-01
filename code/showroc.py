@@ -261,7 +261,7 @@ assay_id = '1834'  # apr90 500 mols
 
 
 if __name__ == '__main__':
-    data=make_data(assay_id,repeats=2,trainclass=1,train_size=20)
+    data=make_data(assay_id,repeats=3,trainclass=1,train_size=30)
     stuff = generative_training(data,niter=2)
     estis,newgraphs = stuff
     detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat= evaluate_all(data, estis, newgraphs, draw_best=5)
