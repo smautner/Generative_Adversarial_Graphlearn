@@ -23,8 +23,8 @@ import eden_tricks
 
 
 import matplotlib.pyplot as plt
-download_active = curry(download)(active=True)
-download_inactive = curry(download)(active=False)
+download_active = curry(download)(active=True,stepsize=500) # default stepsize = 50 (way to few)
+download_inactive = curry(download)(active=False,stepsize=500)
 
 
 def vectorize(thing):
@@ -38,6 +38,11 @@ def test(estimator, X):
     y_pred = estimator.predict(X)
     y_score = estimator.predict_proba(X)[:, 0]
     return [y_pred, y_score]
+
+def error(esti,X,y):
+    pred = esti.predict(X) == y
+    return float(sum(pred))/ len(y)
+
 
 
 
@@ -170,6 +175,20 @@ def draw_select_graphs(graphs):
         #plt.imshow(np.asarray(pic))
 
 ##
+def test_vs_gatesties(estis,data):
+
+    scores = [[error(level_esti,repeats_data['X_test'],repeats_data['y_test'])# level_est and repeats_data
+               for level_esti in repeats_es]
+                    for repeats_data, repeats_es in zip(data, estis)]
+
+    # scores are now [l1,l2,l3..][l1,l2,l3..][l1,l2,l3..]
+    # scores = map(lambda z: reduce(lambda x,y: np.concatenate((x,y)),z) , transpose(scores))
+    #print scores
+    scores = transpose(scores)
+    # transpose to get: [l1,l1,l1..][l2,l2,l2..]  .. and we just flatten the [l_x,l_x..]
+    return transpose([ [np.mean(e),np.std(e)] for e in scores])
+
+##
 def internalgat(estis, newgraphs):
     scores = [[level_esti.predict_proba(vectorize(level))[:,0] for level,level_esti in zip(repeats,repeats_es[1:])] for repeats, repeats_es in zip(newgraphs, estis)]
     # scores are now [l1,l2,l3..][l1,l2,l3..][l1,l2,l3..]
@@ -233,9 +252,10 @@ def simple_draw_graph_quality(data,title='title',file=None):
 def evaluate_all(data,estis,newgraphs,draw_best=5):
     rocdata = roc_data(estis,data)            # what does this need to look like?
     graphs =  select_graphs(newgraphs, estis, print_best=draw_best )      # select some graphs that need drawing later
-    graph_quality = graphlol(data,newgraphs) # dunno, lol
+    graph_quality = graphlol(data,newgraphs)
     graph_quality_internal = internalgat(estis,newgraphs)
-    return rocdata,graphs,graph_quality, graph_quality_internal
+    res5 = test_vs_gatesties(estis,data)
+    return rocdata,graphs,graph_quality, graph_quality_internal, res5
 
 
 
