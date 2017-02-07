@@ -236,11 +236,15 @@ def draw_graph_quality(data):
     ax.legend(loc='lower right')
     plt.show()
 
-def simple_draw_graph_quality(data,title='title',file=None):
+def simple_draw_graph_quality(data,title='title',file=None,ylabel='Accuracy', xlabel="GAT Iteration"):
     means,std = data
     plt.figure()
+
+    plt.ylabel(ylabel)
+    plt.xlabel(xlabel)
     plt.errorbar(range(len(means)), means,  yerr=std)
     plt.title(title)
+
     if file is not None:
         plt.savefig(file)
     else:
