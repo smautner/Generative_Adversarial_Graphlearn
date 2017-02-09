@@ -10,7 +10,7 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
-                        n_jobs=6, train_sizes=np.linspace(.1, 1.0, 5)):
+                        n_jobs=8, train_sizes=np.linspace(.1, 1.0, 5)):
     """
     Generate a simple plot of the test and training learning curve.
 
@@ -88,18 +88,18 @@ srcs= ['1834', '651610',
 '492952', 
 '463112',
 '463213',
-'119',
 '1224857',
+'119',
 '2326']
 
 
-srcs=['119']
 cv = ShuffleSplit(n_splits=10, test_size=0.2, random_state=0)
+cv = ShuffleSplit(n_splits=10, test_size=.15,train_size=500,random_state=0)
+
 for s in srcs:
     x ,y,a,b = sr.get_data(s)
     plt= plot_learning_curve(SVC(),s,x,y,cv=cv)
     plt.savefig(s+'.png')
-
 
 
 
