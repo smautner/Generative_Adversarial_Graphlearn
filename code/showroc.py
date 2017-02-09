@@ -269,7 +269,6 @@ def evaluate_all(data,estis,newgraphs,draw_best=5):
 
 
 # make a data source
-assay_id = '651610'  # apr93 23k mols
 assay_id = '624466'  # apr88
 assay_id = '588350'  # apr86
 assay_id = '449764'  # apr85
@@ -283,13 +282,18 @@ assay_id = '1834'  # apr90 500 mols
 
 
 
+assay_id = '651610'  # apr93 23k mols
 
 if __name__ == '__main__':
-    data=make_data(assay_id,repeats=3,trainclass=1,train_size=30)
-    stuff = generative_training(data,niter=2)
+    data=make_data(assay_id,repeats=3,trainclass=1,train_size=200)
+    stuff = generative_training(data,niter=10)
     estis,newgraphs = stuff
-    detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat= evaluate_all(data, estis, newgraphs, draw_best=5)
-    simple_draw_graph_quality(quick_roc_gat, title='estimator quality',file='1')
-    simple_draw_graph_quality(quick_roc_internal_gat, title='new graph quality',file='2')
+    detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat,res5= evaluate_all(data, estis, newgraphs, draw_best=5)
+    #simple_draw_graph_quality(quick_roc_gat, title='estimator quality',file='1')
+    #simple_draw_graph_quality(quick_roc_internal_gat, title='new graph quality',file='2')
     #draw_select_graphs(best_graphs)
     #drawroc_data(detailed_roc_oracle)
+
+    simple_draw_graph_quality(quick_roc_gat,title='new graphs scored by oracle', ylabel='Score', file='1.png')
+    simple_draw_graph_quality(quick_roc_internal_gat,title='new graphs scored by internal models',file='2.png')
+    simple_draw_graph_quality(res5,title='test set scored by internal model',file='3.png')
