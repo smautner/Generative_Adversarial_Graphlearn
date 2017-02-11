@@ -75,8 +75,49 @@
     \end{figure}    
 \end{frame}
 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}
-\frametitle{Constructive Machine Learning}
+\frametitle{The Problem}
+    \begin{itemize}
+        \item density estimation based on known graphs
+        \item  implies loole constraints on feasible manyfold
+        \item q: how do we get tighter constraints
+            a: Generative adversarial training
+    \end{itemize}
+    \begin{figure}[ht]
+        \centering
+        \footnote{ Yann Le Cun, NIPS 2016 Keynote (modified)}
+        \includegraphics[width=0.9\textwidth]{images/valley.png}
+    \end{figure}    
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Artificial neural networks}
+    \begin{itemize}
+
+        \item ANNs also try to solve creative tasks
+        \item popular are: \footnote{Ian Goodfellow, NIPS 2016 Tutorial }
+        \item Fully visible belief networks (FVBNs)
+        \item variational autoencoders
+        \item \red{generative adversarial networks GANs}
+
+            gans developed in this comunity .. generative pictures
+    \end{itemize}
+
+\frametitle{GANs}
+    \begin{itemize}
+        \item say something about gans
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{GAT on structured domains}
     \begin{itemize}
             % why the new thing should work etc then proposal.
             % comes from NN etc now we use GAN for structures
@@ -84,17 +125,22 @@
             % shpere with data drawing... regions where dots are dense and undense
             % but 1class says things are ok if above plane..
             % arrow to undense region -> point to bad graphs
-        \item To generate graphs, a model is trained on an example set
-        \item This model might \red{not} capture rules accurately
-        \item Well scoring structures might be problematic (see below)
+        \item To generate instances, \red{we} require a model 
+        \item There might not be enough train data to capture the densities correctly. 
+        \item ANN researchers use GANs to solve this problem
+        \item use gen instances to train better discriminators
+        \item use made graphs and make increatingly good graphs 4 graphs
+        \item copy the first add crosses -> last one
         \item {\bf Proposal:} Generate instances and assume they are negative examples
             to \red{improve} the generation guiding model
     \end{itemize}
     \begin{figure}[ht]
         \centering
-        \includegraphics[width=0.7\textwidth]{images/mole_shit.png}
+        \includegraphics[width=0.7\textwidth]{images/valley_clean.png}
     \end{figure}    
 \end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
 \frametitle{The constructive learning problem for finite samples\footnote{Costa Artif. Intell. 2016}}
@@ -184,19 +230,21 @@
 
 \begin{frame}
     \frametitle{Generative adversarial training}
+    Input: \emph{train}; an example set of positive instances
     \begin{enumerate}
             % IMPROVE THIS name of sets need change
             % also show that previous gens are used
 
-        \item train one class model (on example graphs)
-        \item generate graphs based on examples
-        \item train two class model on examples and generated graphs
-        \item generate graphs based on examples
+        \item train \red{one class} model on \emph{train}
+        \item use \emph{train} as seeds for generation
+        \item train \red{two class} model on \emph{train} (classlabel 1) \\
+            and all generated instances (classlabel 0)
+        \item use \emph{train} as seeds for generation
         \item goto 3
     \end{enumerate}
     \begin{figure}[ht]
         \centering
-        \includegraphics[width=0.5\textwidth]{images/gat.png}
+        \includegraphics[width=0.55\textwidth]{images/gat.png}
     \end{figure}
 \end{frame}
 
@@ -215,7 +263,8 @@
 
    \begin{figure}[ht]
         \centering
-        \includegraphics[width=0.80\textwidth]{images/eval1.png}
+        \footnote{500 graphs in train set, 3 repeats, pubchem aid 651610}
+        \includegraphics[width=0.80\textwidth]{images/eval3.png}
     \end{figure}
    %\small{\em scores above horizontal dotted line indicate reliable identification}
 \end{frame}
@@ -245,7 +294,7 @@
 
    \begin{figure}[ht]
         \centering
-        \includegraphics[width=0.80\textwidth]{images/eval3.png}
+        \includegraphics[width=0.80\textwidth]{images/eval1.png}
     \end{figure}
    %\small{\em scores above horizontal dotted line indicate reliable identification}
 \end{frame}
