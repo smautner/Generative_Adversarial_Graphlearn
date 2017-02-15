@@ -70,7 +70,7 @@ def get_data(assay_id):
     return X, y, graphs, stats
 
 
-def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1, test_size_per_class=100):
+def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1, test_size_per_class=300, neg_vec_count=1000 ):
     #   [(test), test_trained_esti, train_graphs] for each repeat
 
     X,y,graphs,stats= get_data(assay_id)
@@ -87,23 +87,40 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
         train_ids = np.random.permutation(possible_train_ids)[:train_size]
         train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
 
+
         # get test items
         possible_test_ids_1 = np.array(list( set(possible_train_ids) - set(train_ids)))
         possible_test_ids_0 = np.where(y == not_train_class)[0]
+
         test_ids_1 = np.random.permutation(possible_test_ids_1)[:test_size_per_class]
-        test_ids_0 = np.random.permutation(possible_test_ids_0)[:test_size_per_class]
+        shuffled_negs = np.random.permutation(possible_test_ids_0)
+        test_ids_0 = shuffled_negs[:test_size_per_class]
+
         test_ids= np.hstack((test_ids_1,test_ids_0))
         X_test = X[test_ids]
         Y_test = y[test_ids]
 
+
+        neg_vec_ids=shuffled_negs[test_size_per_class:test_size_per_class + neg_vec_count]
+        neg_vecs=X[neg_vec_ids]
+
         #esti= SGDClassifier(loss='log')
         #esti.fit(X_test,Y_test)
-        return {'X_test':X_test,'y_test':Y_test,'oracle':esti,'graphs_train':train_graphs}
+        return {'X_test':X_test,'y_test':Y_test,'oracle':esti,'graphs_train':train_graphs,'neg_vecs':neg_vecs}
 
     return [get_run() for i in range(repeats)]
 
 
 ############################################################################
+
+def generative_training_2(data,niter):
+    # data -> [estis]*niter, [gengraphs]*niter
+    # this is the version with the real negatives
+    train= lambda x,y: GAT.generative_adersarial_training_HACK(
+        GAT.get_sampler(), n_iterations=niter, seedgraphs=x, neg_vectors=y,partial_estimator=False)
+
+    stuff = [ train(x['graphs_train'], x['neg_vecs']) for x in data ]
+    return transpose(stuff)
 
 def generative_training(data,niter):
     # data -> [estis]*niter, [gengraphs]*niter
@@ -284,9 +301,10 @@ assay_id = '1834'  # apr90 500 mols
 
 assay_id = '651610'  # apr93 23k mols
 
+assay_id = '1834'  # apr90 500 mols
 if __name__ == '__main__':
-    data=make_data(assay_id,repeats=3,trainclass=1,train_size=200)
-    stuff = generative_training(data,niter=10)
+    data=make_data(assay_id,repeats=3,trainclass=1,train_size=1000, neg_vec_count=1000,test_size_per_class=300)
+    stuff = generative_training_2(data,niter=25)   # note that i use _2 here.
     estis,newgraphs = stuff
     detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat,res5= evaluate_all(data, estis, newgraphs, draw_best=5)
     #simple_draw_graph_quality(quick_roc_gat, title='estimator quality',file='1')

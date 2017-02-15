@@ -47,7 +47,7 @@
 }
 
 \date 
-{Freiburg University \\2017-02}
+{Freiburg University \\2017-02-16}
 
 \titlegraphic{\includegraphics[width=2cm]{images/logo.jpg}
 }
@@ -79,19 +79,41 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% add iverview slide... 
 
+\begin{frame}
+\frametitle{Assumed work}
+    \begin{itemize}
+        \item EDeN (Explicit Decomposition with Neighborhoods)\footnote{github.com/fabriziocosta/EDeN}
+        \begin{itemize}
+            \item Vectorizes Graphs
+            \item Used when training model from graphs
+            \item (not discussed here)
+        \end{itemize}    
+    
+    \item GraphLearn \footnote{github.com/fabriziocosta/GraphLearn} 
+        \begin{itemize}
+            \item generates instances given examples
+            \item (overview given here)
+        \end{itemize}    
+        \item This is a sampling extension for GraphLearn
+    \end{itemize}    
+
+\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}
 \frametitle{The Problem}
     \begin{itemize}
-        \item density estimation based on known graphs
-        \item  implies loole constraints on feasible manyfold
-        \item q: how do we get tighter constraints
-            a: Generative adversarial training
+        \item Density estimation based on observed graphs (preferably few, "positive"
+            class only)
+        \item Implies loose constraints on feasible manyfold
+        \item \red{Question}: How tighten constraints?
+            %a: Generative adversarial training
     \end{itemize}
     \begin{figure}[ht]
         \centering
         \footnote{ Yann Le Cun, NIPS 2016 Keynote (modified)}
-        \includegraphics[width=0.9\textwidth]{images/valley.png}
+        \includegraphics[width=0.8\textwidth]{images/valley.png}
     \end{figure}    
 \end{frame}
 
@@ -101,19 +123,41 @@
 \frametitle{Artificial neural networks}
     \begin{itemize}
 
-        \item ANNs also try to solve creative tasks
-        \item popular are: \footnote{Ian Goodfellow, NIPS 2016 Tutorial }
+        \item ANNs also try to solve creative tasks, 
+        Popular are: \footnote{Ian Goodfellow, NIPS 2016 Tutorial }
         \item Fully visible belief networks (FVBNs)
-        \item variational autoencoders
-        \item \red{generative adversarial networks GANs}
+        \item Variational autoencoders
+        \item \red{Generative adversarial networks GANs}
 
-            gans developed in this comunity .. generative pictures
+            %\red{ === gans developed in this comunity .. generative pictures}
     \end{itemize}
 
-\frametitle{GANs}
-    \begin{itemize}
-        \item say something about gans
-    \end{itemize}
+    %\begin{itemize}
+    %    \item say something about gans
+    %\end{itemize}
+
+    \begin{figure}[ht]
+        \centering
+        \footnote{Al Gharakhanian,  Blogpost, Dec 2016}
+        \includegraphics[width=0.5\textwidth]{images/GAN.png}
+    \end{figure}   
+\end{frame}
+
+
+
+\begin{frame}
+
+\frametitle{GAN examples}
+    \begin{figure}[ht]
+        \centering
+        \footnote{Legid \emph{et al.} 2016}
+        \includegraphics[width=0.7\textwidth]{images/GAN2.png}
+    \end{figure}   
+    \begin{figure}[ht]
+        \centering
+        \footnote{github.com/mattya/chainer-DCGAN }
+        \includegraphics[width=0.7\textwidth]{images/animee.png}
+    \end{figure}   
 \end{frame}
 
 \begin{frame}
@@ -125,18 +169,19 @@
             % shpere with data drawing... regions where dots are dense and undense
             % but 1class says things are ok if above plane..
             % arrow to undense region -> point to bad graphs
-        \item To generate instances, \red{we} require a model 
-        \item There might not be enough train data to capture the densities correctly. 
-        \item ANN researchers use GANs to solve this problem
-        \item use gen instances to train better discriminators
-        \item use made graphs and make increatingly good graphs 4 graphs
-        \item copy the first add crosses -> last one
+        %\item To generate instances, \red{we} require a model 
+        %\item There might not be enough train data to capture the densities correctly. 
+        \item The graph generation guiding model might be too permissive
+        \item ANN researchers inspired us by addressing  a very similar problem using GANs
+        %\item use gen instances to train better discriminators
+        %\item use made graphs and make increatingly good graphs 4 graphs
+        
         \item {\bf Proposal:} Generate instances and assume they are negative examples
             to \red{improve} the generation guiding model
     \end{itemize}
     \begin{figure}[ht]
         \centering
-        \includegraphics[width=0.7\textwidth]{images/valley_clean.png}
+        \includegraphics[width=0.7\textwidth]{images/valley_x3_stars.png}
     \end{figure}    
 \end{frame}
 
@@ -188,7 +233,7 @@
 
 \begin{frame}
     \frametitle{Graph Grammar}
-    A graph grammar is a finite set of productions P=(M,D,E) 
+    A graph grammar is a finite set of productions P=(M,D,E) 
     \begin{itemize}
         \item M=mother graph
         \item D=daughter graph
@@ -203,7 +248,7 @@
 \begin{frame}
     \frametitle{Substitutable Graph Grammar}
     \begin{itemize}
-        \item \red{cores} (neighborhood graphs) can be substituted  ..
+        \item \red{cores} (neighborhood graphs) can be substituted..
         \item .. if they have the same \red{interface} graph
     \end{itemize}
     \begin{figure}[ht]
@@ -230,7 +275,7 @@
 
 \begin{frame}
     \frametitle{Generative adversarial training}
-    Input: \emph{train}; an example set of positive instances
+    Input: \emph{train}; a set of observed  instances
     \begin{enumerate}
             % IMPROVE THIS name of sets need change
             % also show that previous gens are used
@@ -244,77 +289,93 @@
     \end{enumerate}
     \begin{figure}[ht]
         \centering
-        \includegraphics[width=0.55\textwidth]{images/gat.png}
+        \includegraphics[width=0.5\textwidth]{images/genmod_recol.png}
     \end{figure}
 \end{frame}
 
 
 % show that each generation the graphs get betta?
 
+% BENCHMARK II
+\begin{frame}
+    \frametitle{Training accuracy on internal models}
+    \begin{itemize}
+        \item Are generated instances similar to the observed instances?
+    \end{itemize}
+
+   \begin{figure}[ht]
+        \centering
+        \includegraphics[width=0.70\textwidth]{images/eval2.png}
+        \footnote{500 graphs in train set, 3 repeats, pubchem aid 651610}
+    \end{figure}
+   \small{\em lower accuracy indicates that the sets are becoming harder to separate}
+\end{frame}
+
 % BENCHMARK I 
 \begin{frame}
-    \frametitle{Evaluation I}
+    \frametitle{Test accuracy on internal model}
     \begin{itemize}
             % new headlines for all pictures
             % fir linear regressor  or quadratic
             % make first and last datapoints visible 
-        \item Are the guiding models improved by the new graphs?
+        \item Is the observed class actually learned?
+            \footnote{note that the training process has never seen a real negative instance}
+        \item Lower training accuracy coincides with higher test accuracy
     \end{itemize}
 
    \begin{figure}[ht]
         \centering
-        \footnote{500 graphs in train set, 3 repeats, pubchem aid 651610}
-        \includegraphics[width=0.80\textwidth]{images/eval3.png}
+        \includegraphics[width=0.70\textwidth]{images/eval3.png}
     \end{figure}
    %\small{\em scores above horizontal dotted line indicate reliable identification}
 \end{frame}
 
 
-% BENCHMARK II
+
 \begin{frame}
-    \frametitle{Evaluation II}
+    \frametitle{Conclusion}
+    
     \begin{itemize}
-        \item Is the guidance improved? 
+        \item  Generative adversarial training effective in tightening 
+            generation contrains
+        \item Test on larger data set required
+        \item What happens when real negatives are provided in the first pass?
     \end{itemize}
 
-   \begin{figure}[ht]
-        \centering
-        \includegraphics[width=0.80\textwidth]{images/eval2.png}
-    \end{figure}
-   \small{\em lower score indicated that the generated instances become more similar
-              to the examples (thus they are harder to separate)}
+    %\begin{itemize}
+    %\end{itemize}
 \end{frame}
-
-% BENCHMARK III
-\begin{frame}
-    \frametitle{Evaluation III}
-    \begin{itemize}
-        \item Objective quality of designs \red{THIS IS STILL BAD}
-    \end{itemize}
-
-   \begin{figure}[ht]
-        \centering
-        \includegraphics[width=0.80\textwidth]{images/eval1.png}
-    \end{figure}
-   %\small{\em scores above horizontal dotted line indicate reliable identification}
-\end{frame}
-
 
 
 
 % OWARI DA 
 \begin{frame}
-    \frametitle{Conclusion}
+    \frametitle{The End}
     
     \begin{itemize}
-        \item Generative adversarial training is  compatible with our 
-            graph generation method
+        \item  Thank you
         %\item {\bf Future work:} \\\red{learn} task specific coarsening strategy directly from data   
     \end{itemize}
 
     %\begin{itemize}
     %\end{itemize}
 \end{frame}
+
+
+% BENCHMARK III
+%\begin{frame}
+%    \frametitle{Evaluation III}
+%    \begin{itemize}
+%        \item Objective quality of designs \red{THIS IS STILL BAD}
+%    \end{itemize}
+%
+%   \begin{figure}[ht]
+%        \centering
+%        \includegraphics[width=0.80\textwidth]{images/eval1.png}
+%    \end{figure}
+%   %\small{\em scores above horizontal dotted line indicate reliable identification}
+%\end{frame}
+
 
 
 \end{document}
