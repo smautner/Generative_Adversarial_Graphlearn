@@ -301,7 +301,6 @@ assay_id = '1834'  # apr90 500 mols
 
 assay_id = '651610'  # apr93 23k mols
 
-assay_id = '1834'  # apr90 500 mols
 if __name__ == '__main__':
     data=make_data(assay_id,repeats=3,trainclass=1,train_size=1000, neg_vec_count=1000,test_size_per_class=300)
     stuff = generative_training_2(data,niter=25)   # note that i use _2 here.
