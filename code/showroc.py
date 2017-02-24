@@ -82,10 +82,18 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
     esti.fit(X,y)
 
     def get_run():
+
         # get train items
         possible_train_ids = np.where(y == trainclass)[0]
-        train_ids = np.random.permutation(possible_train_ids)[:train_size]
+
+        #train_ids = np.random.permutation(possible_train_ids)[:train_size]
+
+        possible_train_graphs_values = esti.decision_function(X[possible_train_ids])
+        train_ids = np.argpartition(possible_train_ids,-1000)[-1000:]
+
         train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
+
+
 
 
         # get test items

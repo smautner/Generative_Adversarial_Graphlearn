@@ -120,11 +120,9 @@
 
 
 \begin{frame}
-\frametitle{Artificial neural networks}
+\frametitle{Generative ANN architectures}
     \begin{itemize}
 
-        \item ANNs also try to solve creative tasks, 
-        Popular are: \footnote{Ian Goodfellow, NIPS 2016 Tutorial }
         \item Fully visible belief networks (FVBNs)
         \item Variational autoencoders
         \item \red{Generative adversarial networks GANs}
@@ -139,26 +137,29 @@
     \begin{figure}[ht]
         \centering
         \footnote{Al Gharakhanian,  Blogpost, Dec 2016}
-        \includegraphics[width=0.5\textwidth]{images/GAN.png}
+        \includegraphics[width=0.6\textwidth]{images/GAN.png}
+        \footnote{Ian Goodfellow, NIPS 2016}
+        \includegraphics[width=0.2\textwidth]{images/fabann.png}
     \end{figure}   
 \end{frame}
 
 
 
-\begin{frame}
+%\begin{frame}
+%\frametitle{GAN examples}
+%    \begin{figure}[ht]
+%        \centering
+%        \footnote{Legid \emph{et al.} 2016}
+%        \includegraphics[width=0.7\textwidth]{images/GAN2.png}
+%    \end{figure}   
+%    \begin{figure}[ht]
+%        \centering
+%        \footnote{github.com/mattya/chainer-DCGAN }
+%        \includegraphics[width=0.7\textwidth]{images/animee.png}
+%    \end{figure}   
+%\end{frame}
 
-\frametitle{GAN examples}
-    \begin{figure}[ht]
-        \centering
-        \footnote{Legid \emph{et al.} 2016}
-        \includegraphics[width=0.7\textwidth]{images/GAN2.png}
-    \end{figure}   
-    \begin{figure}[ht]
-        \centering
-        \footnote{github.com/mattya/chainer-DCGAN }
-        \includegraphics[width=0.7\textwidth]{images/animee.png}
-    \end{figure}   
-\end{frame}
+
 
 \begin{frame}
 \frametitle{GAT on structured domains}
@@ -171,7 +172,7 @@
             % arrow to undense region -> point to bad graphs
         %\item To generate instances, \red{we} require a model 
         %\item There might not be enough train data to capture the densities correctly. 
-        \item The graph generation guiding model might be too permissive
+        \item The graph generation guiding model might be not tight enough
         \item ANN researchers inspired us by addressing  a very similar problem using GANs
         %\item use gen instances to train better discriminators
         %\item use made graphs and make increatingly good graphs 4 graphs
@@ -245,17 +246,17 @@
     \end{figure}
 \end{frame}
 
-\begin{frame}
-    \frametitle{Substitutable Graph Grammar}
-    \begin{itemize}
-        \item \red{cores} (neighborhood graphs) can be substituted..
-        \item .. if they have the same \red{interface} graph
-    \end{itemize}
-    \begin{figure}[ht]
-        \centering
-        \includegraphics[width=0.9\textwidth]{images/cip1.pdf}
-    \end{figure}
-\end{frame}
+%\begin{frame}
+%    \frametitle{Substitutable Graph Grammar}
+%    \begin{itemize}
+%        \item \red{cores} (neighborhood graphs) can be substituted..
+%        \item .. if they have the same \red{interface} graph
+%    \end{itemize}
+%    \begin{figure}[ht]
+%        \centering
+%        \includegraphics[width=0.9\textwidth]{images/cip1.pdf}
+%    \end{figure}
+%\end{frame}
 
 \begin{frame}
     \frametitle{Substitutable Graph Grammar}
@@ -319,14 +320,15 @@
             % fir linear regressor  or quadratic
             % make first and last datapoints visible 
         \item Is the observed class actually learned?
-            \footnote{note that the training process has never seen a real negative instance}
-        \item Lower training accuracy coincides with higher test accuracy
+            \footnote{note that the training process has never seen any real
+            negative instances}
     \end{itemize}
 
    \begin{figure}[ht]
         \centering
         \includegraphics[width=0.70\textwidth]{images/eval3.png}
     \end{figure}
+    \small{\em  Lower training accuracy coincides with higher test accuracy}
    %\small{\em scores above horizontal dotted line indicate reliable identification}
 \end{frame}
 
@@ -334,12 +336,10 @@
 
 \begin{frame}
     \frametitle{Conclusion}
-    
     \begin{itemize}
         \item  Generative adversarial training effective in tightening 
             generation contrains
         \item Test on larger data set required
-        \item What happens when real negatives are provided in the first pass?
     \end{itemize}
 
     %\begin{itemize}
@@ -356,7 +356,15 @@
         \item  Thank you
         %\item {\bf Future work:} \\\red{learn} task specific coarsening strategy directly from data   
     \end{itemize}
-
+    \begin{figure}[ht]
+        \centering
+        \includegraphics[width=0.6\textwidth]{images/grp.png}
+    \end{figure}
+    
+    \begin{itemize}
+        \item  Greetings from Freiburg :D
+        %\item {\bf Future work:} \\\red{learn} task specific coarsening strategy directly from data   
+    \end{itemize}
     %\begin{itemize}
     %\end{itemize}
 \end{frame}
