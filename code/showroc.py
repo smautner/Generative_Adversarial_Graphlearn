@@ -89,7 +89,7 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
         #train_ids = np.random.permutation(possible_train_ids)[:train_size]
 
         possible_train_graphs_values = esti.decision_function(X[possible_train_ids])
-        train_ids = np.argpartition(possible_train_ids,-1000)[-1000:]
+        train_ids = np.argpartition(possible_train_graphs_values,-train_size)[-train_size:]
 
         train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
 
