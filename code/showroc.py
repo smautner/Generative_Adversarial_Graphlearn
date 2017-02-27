@@ -21,6 +21,8 @@ import eden_tricks
 
 
 
+from sklearn.cluster import KMeans
+
 
 import matplotlib.pyplot as plt
 download_active = curry(download)(active=True,stepsize=500) # default stepsize = 50 (way to few)
@@ -91,8 +93,15 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
         possible_train_graphs_values = esti.decision_function(X[possible_train_ids])
         train_ids = np.argpartition(possible_train_graphs_values,-train_size)[-train_size:]
 
-        train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
+        n_clusters=3
+        clusterer=KMeans(n_clusters=n_clusters)
 
+        res=clusterer.fit_predict(X[train_ids])
+        for i in range(n_clusters):
+            print "%d %d" % (i, np.count_nonzero(res==i))
+
+        print 'select graph ids %s' % str(train_ids)
+        train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
 
 
 
@@ -122,6 +131,8 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
 ############################################################################
 
 def generative_training_2(data,niter):
+    # this is the version that uses real negs :)
+
     # data -> [estis]*niter, [gengraphs]*niter
     # this is the version with the real negatives
     train= lambda x,y: GAT.generative_adersarial_training_HACK(
@@ -308,10 +319,21 @@ assay_id = '1834'  # apr90 500 mols
 
 
 assay_id = '651610'  # apr93 23k mols
+repeats = 3
+n_iter = 25
+train_size = 500
+
 
 if __name__ == '__main__':
-    data=make_data(assay_id,repeats=3,trainclass=1,train_size=500, neg_vec_count=500,test_size_per_class=300)
-    stuff = generative_training_2(data,niter=25)   # note that i use _2 here.
+
+    if True:  # debug
+        assay_id = '1834'
+        repeats = 2
+        n_iter = 2
+        train_size=20
+
+    data=make_data(assay_id,repeats=repeats,trainclass=1,train_size=train_size, neg_vec_count=train_size,test_size_per_class=300)
+    stuff = generative_training_2(data,niter=n_iter)   # note that i use _2 here.
     estis,newgraphs = stuff
     detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat,res5= evaluate_all(data, estis, newgraphs, draw_best=5)
     #simple_draw_graph_quality(quick_roc_gat, title='estimator quality',file='1')
