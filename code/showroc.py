@@ -97,10 +97,19 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
         clusterer=KMeans(n_clusters=n_clusters)
 
         res=clusterer.fit_predict(X[train_ids])
-        for i in range(n_clusters):
-            print "%d %d" % (i, np.count_nonzero(res==i))
 
-        print 'select graph ids %s' % str(train_ids)
+        max=0
+        id = -1
+        for i in range(n_clusters):
+            cnt = np.count_nonzero(res==i)
+            if cnt > max:
+                max=cnt
+                id = i
+            print "%d %d" % (i, cnt)
+
+        train_ids = train_ids[res==id]
+        neg_vec_count = len(train_ids)
+        #print 'select graph ids %s' % str(train_ids)
         train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
 
 
@@ -321,12 +330,12 @@ assay_id = '1834'  # apr90 500 mols
 assay_id = '651610'  # apr93 23k mols
 repeats = 3
 n_iter = 25
-train_size = 500
+train_size = 1000
 
 
 if __name__ == '__main__':
 
-    if True:  # debug
+    if False:  # debug
         assay_id = '651610'
         repeats = 2
         n_iter = 2
