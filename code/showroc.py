@@ -327,7 +327,7 @@ train_size = 500
 if __name__ == '__main__':
 
     if True:  # debug
-        assay_id = '1834'
+        assay_id = '651610'
         repeats = 2
         n_iter = 2
         train_size=20
