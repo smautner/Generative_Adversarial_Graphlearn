@@ -373,9 +373,9 @@ if __name__ == '__main__':
                    repeats=repeats,
                    trainclass=1,
                    train_size=train_size,
-                   neg_vec_count=train_size,
+                   neg_vec_count=train_size, # includes negatives, will only be used with gen_training_2 see below
                    test_size_per_class=300,
-                   pick_strategy='high_scoring') # cluster random  highscoring
+                   pick_strategy='cluster') # cluster random  highscoring
     stuff = generative_training_2(data,niter=n_iter)   # note that i use _2 here.
     estis,newgraphs = stuff
     detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat,res5= evaluate_all(data, estis, newgraphs, draw_best=5)
