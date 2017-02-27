@@ -72,7 +72,28 @@ def get_data(assay_id):
     return X, y, graphs, stats
 
 
-def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1, test_size_per_class=300, neg_vec_count=1000 ):
+def make_data(assay_id,repeats=3,
+              trainclass=1,
+              train_size=50,
+              not_train_class=-1,
+              test_size_per_class=300,
+              neg_vec_count=1000,
+              pick_strategy='random'):
+    '''
+    :param assay_id:
+    :param repeats:
+    :param trainclass:
+    :param train_size:
+    :param not_train_class:
+    :param test_size_per_class:
+    :param neg_vec_count:
+    :param pick_strategy:
+            "random"
+            "highest scoring "
+            "cluster"
+    :return:
+    '''
+
     #   [(test), test_trained_esti, train_graphs] for each repeat
 
     X,y,graphs,stats= get_data(assay_id)
@@ -83,38 +104,45 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
     esti = SGDClassifier(average=True, class_weight='balanced', shuffle=True, n_jobs=4, loss='log')
     esti.fit(X,y)
 
-    def get_run():
-
+    def get_run(neg_vec_count):
         # get train items
         possible_train_ids = np.where(y == trainclass)[0]
 
-        #train_ids = np.random.permutation(possible_train_ids)[:train_size]
 
-        possible_train_graphs_values = esti.decision_function(X[possible_train_ids])
-        train_ids = np.argpartition(possible_train_graphs_values,-train_size)[-train_size:]
 
-        n_clusters=3
-        clusterer=KMeans(n_clusters=n_clusters)
+        if pick_strategy=='random':
+            train_ids = np.random.permutation(possible_train_ids)[:train_size]
+        else:
+            # RATE ALL THE GRAPHS, TAKE THE BEST #TRAINSIZE
+            #if pick_strategy == highest_scoring
+            possible_train_graphs_values = esti.decision_function(X[possible_train_ids])
+            train_ids = np.argpartition(possible_train_graphs_values,-train_size)[-train_size:]
 
-        res=clusterer.fit_predict(X[train_ids])
+            if pick_strategy == 'cluster':
+                # CLUSTER THE BEST ONES, USE THE BIGGEST CLUSTER
+                n_clusters=3
+                clusterer=KMeans(n_clusters=n_clusters)
+                res=clusterer.fit_predict(X[train_ids])
+                max=0
+                id = -1
+                for i in range(n_clusters):
+                    cnt = np.count_nonzero(res==i)
+                    if cnt > max:
+                        max=cnt
+                        id = i
+                    #print "%d %d" % (i, cnt)
+                train_ids = train_ids[res==id]
+                # this sould be the same as train_ids, so the classes are ballanced...
+                neg_vec_count = len(train_ids)
 
-        max=0
-        id = -1
-        for i in range(n_clusters):
-            cnt = np.count_nonzero(res==i)
-            if cnt > max:
-                max=cnt
-                id = i
-            print "%d %d" % (i, cnt)
 
-        train_ids = train_ids[res==id]
-        neg_vec_count = len(train_ids)
-        #print 'select graph ids %s' % str(train_ids)
         train_graphs = list(selection_iterator(graphs, train_ids.tolist()))
 
 
 
-        # get test items
+
+
+        # MAKE THE DATA
         possible_test_ids_1 = np.array(list( set(possible_train_ids) - set(train_ids)))
         possible_test_ids_0 = np.where(y == not_train_class)[0]
 
@@ -134,7 +162,7 @@ def make_data(assay_id,repeats=3,trainclass=1,train_size=50, not_train_class=-1,
         #esti.fit(X_test,Y_test)
         return {'X_test':X_test,'y_test':Y_test,'oracle':esti,'graphs_train':train_graphs,'neg_vecs':neg_vecs}
 
-    return [get_run() for i in range(repeats)]
+    return [get_run(neg_vec_count) for i in range(repeats)]
 
 
 ############################################################################
@@ -335,13 +363,19 @@ train_size = 1000
 
 if __name__ == '__main__':
 
-    if False:  # debug
-        assay_id = '651610'
+    if True:  # debug
+        assay_id = '651610' # 1834 is bad because there are too few compounds :D  65* is too large for testing
         repeats = 2
         n_iter = 2
         train_size=20
 
-    data=make_data(assay_id,repeats=repeats,trainclass=1,train_size=train_size, neg_vec_count=train_size,test_size_per_class=300)
+    data=make_data(assay_id,
+                   repeats=repeats,
+                   trainclass=1,
+                   train_size=train_size,
+                   neg_vec_count=train_size,
+                   test_size_per_class=300,
+                   pick_strategy='high_scoring') # cluster random  highscoring
     stuff = generative_training_2(data,niter=n_iter)   # note that i use _2 here.
     estis,newgraphs = stuff
     detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat,res5= evaluate_all(data, estis, newgraphs, draw_best=5)
