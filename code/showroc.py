@@ -167,21 +167,21 @@ def make_data(assay_id,repeats=3,
 
 ############################################################################
 
-def generative_training_2(data,niter):
+def generative_training_2(data,niter,get_sampler=GAT.get_sampler):
     # this is the version that uses real negs :)
 
     # data -> [estis]*niter, [gengraphs]*niter
     # this is the version with the real negatives
     train= lambda x,y: GAT.generative_adersarial_training_HACK(
-        GAT.get_sampler(), n_iterations=niter, seedgraphs=x, neg_vectors=y,partial_estimator=False)
+        get_sampler(), n_iterations=niter, seedgraphs=x, neg_vectors=y,partial_estimator=False)
 
     stuff = [ train(x['graphs_train'], x['neg_vecs']) for x in data ]
     return transpose(stuff)
 
-def generative_training(data,niter):
+def generative_training(data,niter,get_sampler = GAT.get_sampler):
     # data -> [estis]*niter, [gengraphs]*niter
     train= lambda x: GAT.generative_adersarial_training(
-        GAT.get_sampler(), n_iterations=niter, seedgraphs=x, partial_estimator=False)
+        get_sampler(), n_iterations=niter, seedgraphs=x, partial_estimator=False)
     stuff = [ train(x['graphs_train']) for x in data ]
     return transpose(stuff)
 
