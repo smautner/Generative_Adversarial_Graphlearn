@@ -1,3 +1,5 @@
 
-eden:326ef14d3e6629041c07b3985f10db63f8846871 2016-09-15
-graphlearn:  d167fd9c3ac1c093da18a8639c5c646d0f8376f0 2017-01-04 14:07
+
+checkout the install section of https://github.com/fabriziocosta/GraphLearn
+
+
