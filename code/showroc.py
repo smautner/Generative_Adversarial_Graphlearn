@@ -140,8 +140,6 @@ def make_data(assay_id,repeats=3,
 
 
 
-
-
         # MAKE THE DATA
         possible_test_ids_1 = np.array(list( set(possible_train_ids) - set(train_ids)))
         possible_test_ids_0 = np.where(y == not_train_class)[0]
