@@ -356,12 +356,12 @@ assay_id = '1834'  # apr90 500 mols
 assay_id = '651610'  # apr93 23k mols
 repeats = 3
 n_iter = 25
-train_size = 1000
+train_size = 1200
 
 
 if __name__ == '__main__':
 
-    if True:  # debug
+    if False:  # debug
         assay_id = '651610' # 1834 is bad because there are too few compounds :D  65* is too large for testing
         repeats = 2
         n_iter = 2
@@ -373,7 +373,7 @@ if __name__ == '__main__':
                    train_size=train_size,
                    neg_vec_count=train_size, # includes negatives, will only be used with gen_training_2 see below
                    test_size_per_class=300,
-                   pick_strategy='cluster') # cluster random  highscoring
+                   pick_strategy='random') # cluster random  highscoring
     stuff = generative_training_2(data,niter=n_iter)   # note that i use _2 here.
     estis,newgraphs = stuff
     detailed_roc_oracle, best_graphs, quick_roc_gat, quick_roc_internal_gat,res5= evaluate_all(data, estis, newgraphs, draw_best=5)
