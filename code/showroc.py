@@ -236,8 +236,8 @@ def select_graphs(graphs,estis, print_best=5 ):
 
 
 
-from graphlearn.utils import molecule
 def draw_select_graphs(graphs):
+    from graphlearn.utils import molecule
     for i, graphlist in enumerate(graphs):
         print 'best graphs (according to GAT) for repeat #%d' % i
         molecule.draw(graphlist)
